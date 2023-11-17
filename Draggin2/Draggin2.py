@@ -8,7 +8,7 @@ COUNTDOWN = 1
 RUNNING = 2
 DISQUALIFIED = 3
 SHOWING_RESULTS = 4
-OPTIONS = 5
+ON_OPTIONS_SCREEN = 5
 
 # Game Finals
 course_length = thumby.display.width * 4
@@ -16,6 +16,8 @@ light_interval = 0.75
 
 # State that doesn't reset
 session_best = 0
+drama_mode = False
+disqualifications = False
 
 # Initialize circle sprites for tree
 light_on = bytearray([60,126,255,255,255,255,126,60])
@@ -28,6 +30,9 @@ big_light_off = bytearray([224,56,12,6,2,3,1,1,1,1,3,2,6,4,56,224,
 
 thumby.display.setFPS(60)
 thumby.display.setFont("/lib/font8x8.bin", 8, 8, 1)
+
+option_1_sprite = thumby.Sprite(8, 8, light_off, 8, 0)
+option_2_sprite = thumby.Sprite(8, 8, light_off, 18, 0)
 
 def reset_game():
     global game_state, random_first_light_1_set, random_second_light_1_set, random_first_light_2_set, random_second_light_2_set
@@ -72,13 +77,43 @@ reset_game()
 while True:
     thumby.display.fill(0)
     if game_state == ON_START_SCREEN:
-        # Display "Press Start" on the screen
-        thumby.display.drawText("Press", 15, 12, 1)
-        thumby.display.drawText("Start", 15, 22, 1)
+    
+        thumby.display.drawText("A Start", 5, 12, 1)
+        thumby.display.drawText("B Opts", 5, 22, 1)
 
         if thumby.buttonA.pressed():
             t_phase_start = time.ticks_ms()
             game_state = COUNTDOWN
+        
+        if thumby.buttonB.pressed():
+            game_state = ON_OPTIONS_SCREEN
+
+    elif game_state == ON_OPTIONS_SCREEN:
+        
+        if(drama_mode):
+            option_1_sprite = thumby.Sprite(8, 8, light_on, 56, 12)
+        else:
+            option_1_sprite = thumby.Sprite(8, 8, light_off, 56, 12)
+        
+        if(disqualifications):
+            option_2_sprite = thumby.Sprite(8, 8, light_on, 56, 22)
+        else:
+            option_2_sprite = thumby.Sprite(8, 8, light_off, 56, 22)
+        
+        thumby.display.drawText("Options", 5, 2, 1)
+        thumby.display.drawText("Drama", 5, 12, 1)
+        thumby.display.drawText("DQs", 5, 22, 1)
+        thumby.display.drawSprite(option_1_sprite)
+        thumby.display.drawSprite(option_2_sprite)
+
+        if thumby.buttonU.pressed() and thumby.buttonA.justPressed():
+            drama_mode = not drama_mode
+        
+        if thumby.buttonD.pressed() and thumby.buttonA.justPressed():
+            disqualifications = not disqualifications
+
+        if thumby.buttonL.pressed():
+            game_state = ON_START_SCREEN
 
     elif game_state == COUNTDOWN:
         # Tree involves random lighting of top sets of two, then counts down three yellows before lighting final green
@@ -106,9 +141,7 @@ while True:
         # Countdown timer logic
         t_current = time.ticks_ms()
         t_phase_elapsed = time.ticks_diff(t_current, t_phase_start)/1000.0
-        
-        # Debugging timing
-        # thumby.display.drawText(str(random_second_light_1_set), 10, 22, 1)
+
         if not staged:
             if random_second_light_1_set <= t_phase_elapsed:
                 stage_1_sprite = thumby.Sprite(8, 8, light_on, 8, 0)
@@ -189,10 +222,11 @@ while True:
     thumby.display.update()
     
     # TODO:
-    # Handle other game states (DISQUALIFIED, additional gameplay features, etc.)
+    # Implement DQs
     # Create unique shift points (first is usually shorter, etc)
     # Have progress be based on "speed", which means missed shifts still allow progress but slower
     # Create two player
     # Create DRAMA Mode, with zoomed in and accurate recreation of staging
     ## Implement "stage" drifting
     # Fix centering on results based on time second digits
+    # Implement option highlighting
