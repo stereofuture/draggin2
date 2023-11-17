@@ -36,7 +36,7 @@ option_2_sprite = thumby.Sprite(8, 8, light_off, 18, 0)
 
 def reset_game():
     global game_state, random_first_light_1_set, random_second_light_1_set, random_first_light_2_set, random_second_light_2_set
-    global staged, accumulating_variable, shift_needed
+    global staged, accumulating_variable, shift_needed, disqualified
     global stage_1_sprite, stage_2_sprite, stage_3_sprite, stage_4_sprite
     global countdown3_2_sprite, countdown3_3_sprite, countdown2_2_sprite, countdown2_3_sprite, countdown1_2_sprite, countdown1_3_sprite
     global go_2_sprite, go_3_sprite, accumulating_variable_drawn, t_phase_start, t_phase_elapsed
@@ -52,6 +52,7 @@ def reset_game():
     shift_needed = False
     t_phase_start = 0
     t_phase_elapsed = 0
+    disqualified = False
     
     # PLAIN MODE SPRITES
     # stage
@@ -137,8 +138,6 @@ while True:
         thumby.display.drawSprite(go_2_sprite)
         thumby.display.drawSprite(go_3_sprite)
 
-        # DQs can be a setting, maybe just reset the tree on false start
-        # Countdown timer logic
         t_current = time.ticks_ms()
         t_phase_elapsed = time.ticks_diff(t_current, t_phase_start)/1000.0
 
@@ -179,6 +178,9 @@ while True:
                 thumby.display.update()
                 game_state = RUNNING
                 t_phase_start = time.ticks_ms()
+            if thumby.buttonB.pressed() and t_phase_elapsed < (light_interval*3.0) and disqualifications:
+                disqualified = True
+                game_state = SHOWING_RESULTS
         
     elif game_state == RUNNING:
         thumby.display.drawFilledRectangle(0, 0, accumulating_variable_drawn, 10, 1)
@@ -187,15 +189,13 @@ while True:
         # For debugging
         # thumby.display.drawText(str(accumulating_variable), 15, 16, 1)
         if thumby.buttonB.pressed() and not thumby.buttonA.pressed() and not thumby.buttonU.pressed() :
-            # Player is holding the B button and nothing else
             if not shift_needed:
                 accumulating_variable += 1
                 if accumulating_variable % 4 == 0:
                     accumulating_variable_drawn += 1
             if accumulating_variable % 50 == 0:
                 shift_needed = True
-                
-                # Stop accumulating until the A button is pressed
+
         if thumby.buttonA.pressed() and thumby.buttonU.pressed() and not thumby.buttonB.pressed():
             shift_needed = False
         if accumulating_variable >= course_length:
@@ -204,25 +204,27 @@ while True:
             game_state = SHOWING_RESULTS
 
     elif game_state == SHOWING_RESULTS:
+        if disqualified:
+            formatted_run_time = "DQ'd"
+        else:
+            t_phase_elapsed_sec = t_phase_elapsed / 1000.0
+            formatted_run_time = "{:.3f}".format(t_phase_elapsed_sec)
+
 
         thumby.display.drawText("Run", 22, 0, 1)
-        t_phase_elapsed_sec = t_phase_elapsed / 1000.0
-        formatted_run_time = "{:.3f}".format(t_phase_elapsed_sec)
         thumby.display.drawText(formatted_run_time, 10, 10, 1)
         thumby.display.drawText("Best",18, 20, 1)
         session_best_sec = session_best / 1000.0
         formatted_session_best = "{:.3f}".format(session_best_sec)
         thumby.display.drawText(formatted_session_best, 10, 30, 1)
-
         
         if thumby.buttonL.pressed():
-            if session_best > t_phase_elapsed or session_best == 0:
+            if t_phase_elapsed != 0 and session_best > t_phase_elapsed or session_best == 0:
                 session_best = t_phase_elapsed
             reset_game()
     thumby.display.update()
     
     # TODO:
-    # Implement DQs
     # Create unique shift points (first is usually shorter, etc)
     # Have progress be based on "speed", which means missed shifts still allow progress but slower
     # Create two player
