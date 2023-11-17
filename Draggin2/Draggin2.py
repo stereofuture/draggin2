@@ -12,6 +12,7 @@ OPTIONS = 5
 
 # Game Finals
 course_length = thumby.display.width * 4
+light_interval = 0.75
 
 # State that doesn't reset
 session_best = 0
@@ -25,31 +26,27 @@ big_light_on = bytearray([224,248,252,254,254,255,255,255,255,255,255,254,254,25
 big_light_off = bytearray([224,56,12,6,2,3,1,1,1,1,3,2,6,4,56,224,
            7,28,48,96,64,192,128,128,128,128,192,64,96,48,28,7])
 
-thumby.display.setFPS(30)
+thumby.display.setFPS(60)
 thumby.display.setFont("/lib/font8x8.bin", 8, 8, 1)
 
 def reset_game():
-    print("")
     global game_state, random_first_light_1_set, random_second_light_1_set, random_first_light_2_set, random_second_light_2_set
-    global staged, countdown_timer, accumulating_variable, time_in_running_state, results_time, shift_needed, accumulating_timer, start_time
+    global staged, accumulating_variable, shift_needed
     global stage_1_sprite, stage_2_sprite, stage_3_sprite, stage_4_sprite
     global countdown3_2_sprite, countdown3_3_sprite, countdown2_2_sprite, countdown2_3_sprite, countdown1_2_sprite, countdown1_3_sprite
-    global go_2_sprite, go_3_sprite, accumulating_variable_drawn
+    global go_2_sprite, go_3_sprite, accumulating_variable_drawn, t_phase_start, t_phase_elapsed
     
     game_state = ON_START_SCREEN
-    random_first_light_1_set = 0
-    random_second_light_1_set = 0
-    random_first_light_2_set = 0
-    random_second_light_2_set = 0
+    random_first_light_1_set = random.random() * 5.0 + 1.0
+    random_second_light_1_set = random.random() * 5.0 + 1.0
+    random_first_light_2_set = random.random() * 5.0 + 1.0
+    random_second_light_2_set = random.random() * 5.0 + 1.0
     staged = False
-    countdown_timer = 4  # Initial countdown timer
     accumulating_variable = 0
     accumulating_variable_drawn = 0
-    time_in_running_state = 0
-    results_time = 0
     shift_needed = False
-    accumulating_timer = 0
-    start_time = 0
+    t_phase_start = 0
+    t_phase_elapsed = 0
     
     # PLAIN MODE SPRITES
     # stage
@@ -80,14 +77,10 @@ while True:
         thumby.display.drawText("Start", 15, 22, 1)
 
         if thumby.buttonA.pressed():
-            random_first_light_1_set = random.randint(0,6)
-            random_second_light_1_set = random.randint(0,6)
-            random_first_light_2_set = random.randint(0,6)
-            random_second_light_2_set = random.randint(0,6)
+            t_phase_start = time.ticks_ms()
             game_state = COUNTDOWN
 
     elif game_state == COUNTDOWN:
-        # Display countdown_timer on the screen
         # Tree involves random lighting of top sets of two, then counts down three yellows before lighting final green
 
         #PLAIN MODE
@@ -111,54 +104,50 @@ while True:
 
         # DQs can be a setting, maybe just reset the tree on false start
         # Countdown timer logic
+        t_current = time.ticks_ms()
+        t_phase_elapsed = time.ticks_diff(t_current, t_phase_start)/1000.0
         
-        time.sleep(1)
-        if random_second_light_2_set > 0 or random_second_light_1_set > 0:
-            random_second_light_2_set -= 1
-            random_second_light_1_set -= 1
-            if random_second_light_1_set <= 0:
+        # Debugging timing
+        # thumby.display.drawText(str(random_second_light_1_set), 10, 22, 1)
+        if not staged:
+            if random_second_light_1_set <= t_phase_elapsed:
                 stage_1_sprite = thumby.Sprite(8, 8, light_on, 8, 0)
                 stage_2_sprite = thumby.Sprite(8, 8, light_on, 18, 0)
-            if random_second_light_2_set <= 0:
+            if random_second_light_2_set <= t_phase_elapsed:
                 stage_3_sprite = thumby.Sprite(8, 8, light_on, 42, 0)
                 stage_4_sprite = thumby.Sprite(8, 8, light_on, 52, 0)
+            
+            if random_second_light_2_set <= t_phase_elapsed and random_second_light_1_set <= t_phase_elapsed:
+                staged = True
+                t_phase_start = time.ticks_ms()
         else:
-            staged = True
-        
-        if staged and countdown_timer >= 0:
-            # Update countdown timer
-            # thumby.display.drawText(str(countdown_timer), 15, 16, 1)
-            countdown_timer -= 1
-            if countdown_timer == 3:
+            if t_phase_elapsed <= light_interval:
                 countdown3_2_sprite = thumby.Sprite(8, 8, light_on, 18, 10)
                 countdown3_3_sprite = thumby.Sprite(8, 8, light_on, 42, 10)
-            if countdown_timer == 2:
+            if light_interval < t_phase_elapsed <= (light_interval*2.0):
                 countdown3_2_sprite = thumby.Sprite(8, 8, light_off, 18, 10)
                 countdown3_3_sprite = thumby.Sprite(8, 8, light_off, 42, 10)
 
                 countdown2_2_sprite = thumby.Sprite(8, 8, light_on, 18, 20)
                 countdown2_3_sprite = thumby.Sprite(8, 8, light_on, 42, 20)
-            if countdown_timer == 1:
+            if (light_interval*2.0) < t_phase_elapsed <= (light_interval*3.0):
                 countdown2_2_sprite = thumby.Sprite(8, 8, light_off, 18, 20)
                 countdown2_3_sprite = thumby.Sprite(8, 8, light_off, 42, 20)
 
                 countdown1_2_sprite = thumby.Sprite(8, 8, light_on, 18, 30)
                 countdown1_3_sprite = thumby.Sprite(8, 8, light_on, 42, 30)
-            if countdown_timer == 0:
+            if (light_interval*3.0) < t_phase_elapsed <= (light_interval*4.0):
                 countdown1_2_sprite = thumby.Sprite(8, 8, light_off, 18, 30)
                 countdown1_3_sprite = thumby.Sprite(8, 8, light_off, 42, 30)
                 
                 go_2_sprite = thumby.Sprite(16, 16, big_light_on, 0, 22)
                 go_3_sprite = thumby.Sprite(16, 16, big_light_on, 52, 22)
-        elif staged:
-            # thumby.display.drawText("GO", 15, 16, 1)
-            thumby.display.update()
-            # Transition to RUNNING state when countdown is done
-            game_state = RUNNING
-            accumulating_timer = 0
+            if (light_interval*4.0) < t_phase_elapsed <= (light_interval*5.0):
+                thumby.display.update()
+                game_state = RUNNING
+                t_phase_start = time.ticks_ms()
         
     elif game_state == RUNNING:
-        accumulating_timer += 1
         thumby.display.drawFilledRectangle(0, 0, accumulating_variable_drawn, 10, 1)
         if shift_needed:
             thumby.display.drawText(str("SHIFT!"), 10, 20, 1)
@@ -177,19 +166,25 @@ while True:
         if thumby.buttonA.pressed() and thumby.buttonU.pressed() and not thumby.buttonB.pressed():
             shift_needed = False
         if accumulating_variable >= course_length:
+            t_current = time.ticks_ms()
+            t_phase_elapsed = time.ticks_diff(t_current, t_phase_start)
             game_state = SHOWING_RESULTS
 
     elif game_state == SHOWING_RESULTS:
-        # Display results_time on the screen
-        thumby.display.drawText("Run", 0, 0, 1)
-        thumby.display.drawText("Best", 0, 10, 1)
-        thumby.display.drawText(str(accumulating_timer), 30, 0, 1)
-        thumby.display.drawText(str(session_best), 38, 10, 1)
-        thumby.display.drawText("Push L", 8, 22, 1)
-        thumby.display.drawText("To Reset", 0, 32, 1)
+
+        thumby.display.drawText("Run", 22, 0, 1)
+        t_phase_elapsed_sec = t_phase_elapsed / 1000.0
+        formatted_run_time = "{:.3f}".format(t_phase_elapsed_sec)
+        thumby.display.drawText(formatted_run_time, 10, 10, 1)
+        thumby.display.drawText("Best",18, 20, 1)
+        session_best_sec = session_best / 1000.0
+        formatted_session_best = "{:.3f}".format(session_best_sec)
+        thumby.display.drawText(formatted_session_best, 10, 30, 1)
+
+        
         if thumby.buttonL.pressed():
-            if session_best > accumulating_timer or session_best == 0:
-                session_best = accumulating_timer
+            if session_best > t_phase_elapsed or session_best == 0:
+                session_best = t_phase_elapsed
             reset_game()
     thumby.display.update()
     
@@ -199,5 +194,5 @@ while True:
     # Have progress be based on "speed", which means missed shifts still allow progress but slower
     # Create two player
     # Create DRAMA Mode, with zoomed in and accurate recreation of staging
-    # Transition to using actual time
-    # Fix 'Best' Bug
+    ## Implement "stage" drifting
+    # Fix centering on results based on time second digits
