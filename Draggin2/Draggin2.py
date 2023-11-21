@@ -74,10 +74,10 @@ def reset_game():
     
     countdown3_2_sprite = thumby.Sprite(12, 12, medium_light_off, 18, 0)
     countdown3_3_sprite = thumby.Sprite(12, 12, medium_light_off, 42, 0)
-    countdown2_2_sprite = thumby.Sprite(12, 12, medium_light_off, 18, 18)
-    countdown2_3_sprite = thumby.Sprite(12, 12, medium_light_off, 42, 18)
-    countdown1_2_sprite = thumby.Sprite(12, 12, medium_light_off, 18, 30)
-    countdown1_3_sprite = thumby.Sprite(12, 12, medium_light_off, 42, 30)
+    countdown2_2_sprite = thumby.Sprite(12, 12, medium_light_off, 18, 14)
+    countdown2_3_sprite = thumby.Sprite(12, 12, medium_light_off, 42, 14)
+    countdown1_2_sprite = thumby.Sprite(12, 12, medium_light_off, 18, 28)
+    countdown1_3_sprite = thumby.Sprite(12, 12, medium_light_off, 42, 28)
     
     go_2_sprite = thumby.Sprite(16, 16, big_light_off, 0, 22)
     go_3_sprite = thumby.Sprite(16, 16, big_light_off, 52, 22)
@@ -106,15 +106,10 @@ reset_game()
 while True:
     thumby.display.fill(0)
     if game_state == ON_START_SCREEN:
-        
-        thumby.display.drawSprite(countdown3_2_sprite)
-        thumby.display.drawSprite(countdown3_3_sprite)
-        thumby.display.drawSprite(countdown2_2_sprite)
-        thumby.display.drawSprite(countdown2_3_sprite)
-        thumby.display.drawSprite(countdown1_2_sprite)
-        thumby.display.drawSprite(countdown1_3_sprite)
         # thumby.display.drawText("A Start", 5, 12, 1)
         # thumby.display.drawText("B Opts", 5, 22, 1)
+        thumby.display.drawSprite(go_2_sprite)
+        thumby.display.drawSprite(go_3_sprite)
 
         if thumby.buttonA.pressed():
             t_phase_start = time.ticks_ms()
@@ -156,16 +151,23 @@ while True:
         #PLAIN MODE
         # Tree Trunk
         if drama_mode:
-            thumby.display.drawSprite(prestage_1_sprite)
-            thumby.display.drawSprite(prestage_2_sprite)
-            thumby.display.drawSprite(prestage_3_sprite)
-            thumby.display.drawSprite(prestage_4_sprite)
-            
-            thumby.display.drawSprite(stage_1_sprite)
-            thumby.display.drawSprite(stage_2_sprite)
-            thumby.display.drawSprite(stage_3_sprite)
-            thumby.display.drawSprite(stage_4_sprite)
-            pass
+            if not staged:
+                thumby.display.drawSprite(prestage_1_sprite)
+                thumby.display.drawSprite(prestage_2_sprite)
+                thumby.display.drawSprite(prestage_3_sprite)
+                thumby.display.drawSprite(prestage_4_sprite)
+                
+                thumby.display.drawSprite(stage_1_sprite)
+                thumby.display.drawSprite(stage_2_sprite)
+                thumby.display.drawSprite(stage_3_sprite)
+                thumby.display.drawSprite(stage_4_sprite)
+            else:
+                thumby.display.drawSprite(countdown3_2_sprite)
+                thumby.display.drawSprite(countdown3_3_sprite)
+                thumby.display.drawSprite(countdown2_2_sprite)
+                thumby.display.drawSprite(countdown2_3_sprite)
+                thumby.display.drawSprite(countdown1_2_sprite)
+                thumby.display.drawSprite(countdown1_3_sprite)
         else:
             prestaged = True
             thumby.display.drawFilledRectangle(29, 0, 10, 40, 1)
