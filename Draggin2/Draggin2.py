@@ -19,6 +19,22 @@ session_best = 0
 drama_mode = False
 disqualifications = False
 
+# Title Sprites
+# BITMAP: width: 12, height: 12
+d_sprite_array = bytearray([224,0,0,128,192,96,48,144,216,200,200,24,48,224,
+           63,63,60,63,57,48,55,39,51,25,12,6,3,1])
+           # BITMAP: width: 14, height: 14
+bitmap2 = bytearray([160,0,0,128,192,96,48,144,216,200,200,24,48,224,
+           54,33,36,63,57,48,55,39,51,25,12,6,3,1])
+           # BITMAP: width: 14, height: 14
+bitmap3 = bytearray([192,0,0,128,192,96,48,144,216,200,200,24,48,224,
+           51,39,36,47,41,48,55,39,51,25,12,6,3,1])
+           # BITMAP: width: 14, height: 14
+bitmap4 = bytearray([64,0,0,128,192,96,48,144,216,200,200,24,48,224,
+           18,55,20,47,41,48,55,39,19,25,12,6,3,1])
+# title_d = thumby.Sprite(14, 14, d_sprite_array, 2, 2)
+title_d = thumby.Sprite(14, 14, d_sprite_array+d_sprite_array+bitmap2+bitmap2+bitmap3+bitmap3+bitmap4+bitmap4, 2, 2)
+
 # Initialize circle sprites for tree
 light_on = bytearray([60,126,255,255,255,255,126,60])
 light_off = bytearray([60,66,129,129,129,129,66,60])
@@ -29,10 +45,13 @@ big_light_off = bytearray([224,56,12,6,2,3,1,1,1,1,3,2,6,4,56,224,
            7,28,48,96,64,192,128,128,128,128,192,64,96,48,28,7])
 
 thumby.display.setFPS(60)
-thumby.display.setFont("/lib/font8x8.bin", 8, 8, 1)
+thumby.display.setFont("/lib/font5x7.bin", 5, 7, 1)
+
 
 option_1_sprite = thumby.Sprite(8, 8, light_off, 8, 0)
 option_2_sprite = thumby.Sprite(8, 8, light_off, 18, 0)
+
+frameCtr = 0
 
 def reset_game():
     global game_state, random_first_light_1_set, random_second_light_1_set, random_first_light_2_set, random_second_light_2_set
@@ -78,9 +97,18 @@ reset_game()
 while True:
     thumby.display.fill(0)
     if game_state == ON_START_SCREEN:
+        thumby.display.setFont("/lib/font5x7.bin", 5, 7, 1)
+        
+        frameCtr+=1
+        if(frameCtr==7):
+            frameCtr=0
     
-        thumby.display.drawText("A Start", 5, 12, 1)
-        thumby.display.drawText("B Opts", 5, 22, 1)
+        title_d.setFrame(frameCtr)
+        thumby.display.drawSprite(title_d)
+        thumby.display.drawText("raggin' 2", 18, 10, 1)
+        thumby.display.drawText("A Start", 18, 22, 1)
+        # thumby.display.drawText("B Opts", 18, 32, 1)
+        thumby.display.drawText("B Help", 18, 32, 1)
 
         if thumby.buttonA.pressed():
             t_phase_start = time.ticks_ms()
@@ -90,33 +118,40 @@ while True:
             game_state = ON_OPTIONS_SCREEN
 
     elif game_state == ON_OPTIONS_SCREEN:
+        thumby.display.setFont("/lib/font3x5.bin", 3, 5, 1)
+        thumby.display.drawText("B for Gas", 5, 0, 1)
+        thumby.display.drawText("Release to Shift", 5, 8, 1)
+        thumby.display.drawText("A for Clutch", 5, 16, 1)
+        thumby.display.drawText("Up Shifts Up", 5, 24, 1)
+        thumby.display.drawText("Left Resets", 5, 32, 1)
         
-        if(drama_mode):
-            option_1_sprite = thumby.Sprite(8, 8, light_on, 56, 12)
-        else:
-            option_1_sprite = thumby.Sprite(8, 8, light_off, 56, 12)
+        # if(drama_mode):
+        #     option_1_sprite = thumby.Sprite(8, 8, light_on, 56, 12)
+        # else:
+        #     option_1_sprite = thumby.Sprite(8, 8, light_off, 56, 12)
         
-        if(disqualifications):
-            option_2_sprite = thumby.Sprite(8, 8, light_on, 56, 22)
-        else:
-            option_2_sprite = thumby.Sprite(8, 8, light_off, 56, 22)
+        # if(disqualifications):
+        #     option_2_sprite = thumby.Sprite(8, 8, light_on, 56, 22)
+        # else:
+        #     option_2_sprite = thumby.Sprite(8, 8, light_off, 56, 22)
         
-        thumby.display.drawText("Options", 5, 2, 1)
-        thumby.display.drawText("Drama", 5, 12, 1)
-        thumby.display.drawText("DQs", 5, 22, 1)
-        thumby.display.drawSprite(option_1_sprite)
-        thumby.display.drawSprite(option_2_sprite)
+        # thumby.display.drawText("Options", 5, 2, 1)
+        # thumby.display.drawText("Drama", 5, 12, 1)
+        # thumby.display.drawText("DQs", 5, 22, 1)
+        # thumby.display.drawSprite(option_1_sprite)
+        # thumby.display.drawSprite(option_2_sprite)
 
-        if thumby.buttonU.pressed() and thumby.buttonA.justPressed():
-            drama_mode = not drama_mode
+        # if thumby.buttonU.pressed() and thumby.buttonA.justPressed():
+        #     drama_mode = not drama_mode
         
-        if thumby.buttonD.pressed() and thumby.buttonA.justPressed():
-            disqualifications = not disqualifications
+        # if thumby.buttonD.pressed() and thumby.buttonA.justPressed():
+        #     disqualifications = not disqualifications
 
         if thumby.buttonL.pressed():
             game_state = ON_START_SCREEN
 
     elif game_state == COUNTDOWN:
+        thumby.display.setFont("/lib/font8x8.bin", 8, 8, 1)
         # Tree involves random lighting of top sets of two, then counts down three yellows before lighting final green
 
         #PLAIN MODE
